@@ -1,0 +1,18 @@
+[package]
+authors = ["herschelma666@gmail.com"]
+edition = "2021"
+name = "ghtrending"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+mlua = { version = "*", features = [
+  "luajit",
+  "module",
+  "async",
+  "send",
+  "serialize",
+  "macros",
+] }

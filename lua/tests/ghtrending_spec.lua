@@ -1,12 +1,7 @@
 local eq = assert.are.same
 describe("ghtrending", function()
-	it("require plugin", function()
-		require("ghtrending")
-	end)
-
-	it("greeting", function()
-		local m = require("ghtrending")
-		local grs = "greeting"
-		eq(m.hello(grs).name, grs)
+	it("require module", function()
+		local M = require("ghtrending_nvim")
+		assert(M ~= nil)
 	end)
 end)

@@ -1,18 +1,20 @@
 [package]
 authors = ["herschelma666@gmail.com"]
 edition = "2021"
-name = "ghtrending"
+name = "ghtrending_nvim"
 version = "0.1.0"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-mlua = { version = "*", features = [
+ghtrending = { path = "../ghtrending" }
+mlua = { version = "0.9.4", features = [
   "luajit",
   "module",
   "async",
   "send",
   "serialize",
+  "serde",
   "macros",
 ] }

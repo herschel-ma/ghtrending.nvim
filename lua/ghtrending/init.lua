@@ -94,7 +94,8 @@ function display:init(datas, is_repo)
 				readonly = true,
 			},
 			win_options = {
-				winhighlight = "Normal:CursorLine,FloatBorder:LineNr",
+				winblend = 25,
+				winhighlight = "Normal:NormalFloat,FloatBorder:LineNr",
 			},
 			ns_id = ns,
 		}),
@@ -106,7 +107,8 @@ function display:init(datas, is_repo)
 				readonly = false,
 			},
 			win_options = {
-				winhighlight = "Normal:CursorLine,FloatBorder:LineNr",
+				winblend = 25,
+				winhighlight = "Normal:NormalFloat,FloatBorder:LineNr",
 				scrolloff = 3,
 			},
 			ns_id = ns,
@@ -164,6 +166,13 @@ function display:init(datas, is_repo)
 			})
 		end
 	end)
+	-- Mapping
+	popups.left_popup:map("n", "q", function()
+		layout:unmount()
+	end, { silent = true })
+	popups.left_popup:map("n", "<esc>", function()
+		layout:unmount()
+	end, { silent = true })
 end
 
 -- create two custom functions for user to use

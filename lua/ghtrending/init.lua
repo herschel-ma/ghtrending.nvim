@@ -137,39 +137,11 @@ function display:init(datas, is_repo)
 	)
 
 	vim.api.nvim_buf_set_option(popups.right_popup.bufnr, "filetype", "ghtrending")
-	if is_repo == true then
-		fill_buffer(popups.left_popup, {
-			datas = datas,
-			is_repo = true,
-		})
-	else
-		fill_buffer(popups.left_popup, { datas = datas })
-	end
-
+	fill_buffer(popups.left_popup, { datas = datas, is_repo = is_repo })
 	-- Autocmds
-	local augroup = vim.api.nvim_create_augroup("ghtrending", { clear = false })
-	vim.api.nvim_clear_autocmds({ buffer = popups.left_popup.bufnr, group = augroup })
-	-- vim.api.nvim_create_autocmd("BufLeave", {
-	-- 	group = augroup,
-	-- 	buffer = popups.left_popup.bufnr,
-	-- 	callback = function()
-	-- 		layout:unmount()
-	-- 	end,
-	-- })
 	popups.left_popup:on(event.CursorMoved, function()
 		local line, _ = unpack(vim.api.nvim_win_get_cursor(popups.left_popup.winid))
-		if is_repo == true then
-			fill_buffer(popups.right_popup, {
-				datas = datas,
-				line = line,
-				is_repo = is_repo,
-			})
-		else
-			fill_buffer(popups.right_popup, {
-				datas = datas,
-				line = line,
-			})
-		end
+		fill_buffer(popups.right_popup, { datas = datas, line = line, is_repo = is_repo })
 	end)
 
 	for _, p in pairs(popups) do

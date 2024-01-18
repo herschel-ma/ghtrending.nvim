@@ -10,7 +10,9 @@ local nui_layout = require("nui.layout")
 local event = require("nui.utils.autocmd").event
 
 local function clear_buffer(buf)
+	vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
 	vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, {})
+	vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
 	for _, extmark in ipairs(vim.api.nvim_buf_get_extmarks(buf.bufnr, ns, 0, -1, {})) do
 		vim.api.nvim_buf_del_extmark(buf.bufnr, ns, extmark[1])
 	end
@@ -64,7 +66,9 @@ local function fill_buffer(buf, opts)
 		end
 	end
 
-	vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
+	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
+	-- vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
+	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
 end
 
 --- @param datas object
@@ -99,7 +103,7 @@ function display:init(datas, is_repo)
 			ns_id = ns,
 		}),
 		right_popup = nui_popup({
-			focusable = false,
+			focusable = true,
 			border = "single",
 			buf_options = {
 				modifiable = true,
@@ -126,7 +130,7 @@ function display:init(datas, is_repo)
 		nui_layout.Box({
 			nui_layout.Box(popups.left_popup, { size = "40%" }),
 			nui_layout.Box(popups.right_popup, { size = "60%" }),
-		}, { dir = "row" })
+		}, { dir = "row", grow = 1 })
 	)
 
 	vim.api.nvim_buf_set_option(popups.right_popup.bufnr, "filetype", "ghtrending")
@@ -138,18 +142,17 @@ function display:init(datas, is_repo)
 	else
 		fill_buffer(popups.left_popup, { datas = datas })
 	end
-	layout:mount()
 
 	-- Autocmds
 	local augroup = vim.api.nvim_create_augroup("ghtrending", { clear = false })
 	vim.api.nvim_clear_autocmds({ buffer = popups.left_popup.bufnr, group = augroup })
-	vim.api.nvim_create_autocmd("BufLeave", {
-		group = augroup,
-		buffer = popups.left_popup.bufnr,
-		callback = function()
-			layout:unmount()
-		end,
-	})
+	-- vim.api.nvim_create_autocmd("BufLeave", {
+	-- 	group = augroup,
+	-- 	buffer = popups.left_popup.bufnr,
+	-- 	callback = function()
+	-- 		layout:unmount()
+	-- 	end,
+	-- })
 	popups.left_popup:on(event.CursorMoved, function()
 		local line, _ = unpack(vim.api.nvim_win_get_cursor(popups.left_popup.winid))
 		if is_repo == true then
@@ -165,6 +168,19 @@ function display:init(datas, is_repo)
 			})
 		end
 	end)
+	for _, p in pairs(popups) do
+		p:on("BufLeave", function()
+			vim.schedule(function()
+				local bufnr = vim.api.nvim_get_current_buf()
+				for _, lp in pairs(popups) do
+					if lp.bufnr == bufnr then
+						return
+					end
+				end
+				layout:unmount()
+			end)
+		end)
+	end
 	-- Mapping
 	popups.left_popup:map("n", "q", function()
 		layout:unmount()
@@ -172,6 +188,15 @@ function display:init(datas, is_repo)
 	popups.left_popup:map("n", "<esc>", function()
 		layout:unmount()
 	end, { silent = true })
+	popups.left_popup:map("n", "L", function()
+		vim.api.nvim_set_current_win(popups.right_popup.winid)
+	end, { silent = true })
+
+	popups.right_popup:map("n", "H", function()
+		vim.api.nvim_set_current_win(popups.left_popup.winid)
+	end, { silent = true })
+
+	layout:mount()
 end
 
 -- create two custom functions for user to use

@@ -7,6 +7,7 @@ local ns = vim.api.nvim_create_namespace("ghtrending")
 local nui_text = require("nui.text")
 local nui_popup = require("nui.popup")
 local nui_layout = require("nui.layout")
+local nui_table = require("nui.table")
 local event = require("nui.utils.autocmd").event
 
 local function clear_buffer(buf)
@@ -51,21 +52,18 @@ local function fill_buffer(buf, opts)
 					table.insert(lines, " " .. "repository url" .. ":")
 					table.insert(lines, "     " .. data.link)
 				else
-					table.insert(lines, " " .. "repo url" .. ":")
-					table.insert(lines, "     " .. data.avatar)
-					table.insert(lines, " " .. "popular repository" .. ":")
-					table.insert(lines, "     " .. data.popular_repo)
-					table.insert(lines, " " .. "description" .. ":")
-					table.insert(lines, "     " .. data.description)
+					display:render_table(buf.bufnr, { datas = { data } })
 				end
 			end
 		end
 	else
 		for i, data in ipairs(datas) do
 			table.insert(lines, " " .. i .. "." .. data.name)
+			vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
+			vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
+			vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
 		end
 	end
-
 	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
 	-- vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
 	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
@@ -123,13 +121,13 @@ function display:init(datas, is_repo)
 			relative = "editor",
 			position = "50%",
 			size = {
-				width = "70%",
-				height = "60%",
+				width = "80%",
+				height = "50%",
 			},
 		},
 		nui_layout.Box({
-			nui_layout.Box(popups.left_popup, { size = "40%" }),
-			nui_layout.Box(popups.right_popup, { size = "60%" }),
+			nui_layout.Box(popups.left_popup, { size = "30%" }),
+			nui_layout.Box(popups.right_popup, { size = "70%" }),
 		}, { dir = "row", grow = 1 })
 	)
 
@@ -168,6 +166,7 @@ function display:init(datas, is_repo)
 			})
 		end
 	end)
+
 	for _, p in pairs(popups) do
 		p:on("BufLeave", function()
 			vim.schedule(function()
@@ -181,6 +180,7 @@ function display:init(datas, is_repo)
 			end)
 		end)
 	end
+
 	-- Mapping
 	popups.left_popup:map("n", "q", function()
 		layout:unmount()
@@ -198,24 +198,71 @@ function display:init(datas, is_repo)
 
 	layout:mount()
 end
+--- @param bufnr integer
+--- @param opts table
+function display:render_table(bufnr, opts)
+	local is_repo = opts.is_repo or nil
+	local datas = opts.datas
+	local tbl = {}
+
+	if is_repo == true then
+		tbl = nui_table({})
+	else
+		tbl = nui_table({
+			bufnr = bufnr,
+			columns = {
+				{
+					align = "center",
+					accessor_key = "name",
+					header = "Name",
+				},
+				{
+					align = "center",
+					accessor_key = "avatar",
+					header = "Avatar",
+				},
+				{
+					align = "right",
+					accessor_key = "description",
+					cell = function(cell)
+						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
+					end,
+					header = "Description",
+				},
+				{
+					align = "right",
+					accessor_key = "popular_repo",
+					cell = function(cell)
+						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
+					end,
+					header = "Popular Repository",
+				},
+			},
+			data = datas,
+		})
+	end
+
+	tbl:render()
+	print(vim.inspect(tbl:get_cell()))
+end
 
 -- create two custom functions for user to use
 vim.api.nvim_create_user_command("GhtrendingDev", function()
-	local devlopers = gh.process_developer()
-	-- local devlopers = {
-	-- 	{
-	-- 		name = "test1",
-	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
-	-- 		popular_repo = "https://github.com/username/test1",
-	-- 		description = "desc test1",
-	-- 	},
-	-- 	{
-	-- 		name = "test2",
-	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
-	-- 		popular_repo = "https://github.com/username/test2",
-	-- 		description = "desc test2",
-	-- 	},
-	-- }
+	-- local devlopers = gh.process_developer()
+	local devlopers = {
+		{
+			name = "test1",
+			avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
+			popular_repo = "https://github.com/username/test1",
+			description = "desc test1",
+		},
+		{
+			name = "test2",
+			avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
+			popular_repo = "https://github.com/username/test2",
+			description = "desc test2",
+		},
+	}
 	M.devlopers = devlopers or nil
 	if M.devlopers ~= nil then
 		display:init(M.devlopers)

@@ -29,7 +29,6 @@ local function fill_buffer(buf, opts)
 		for i, data in ipairs(datas) do
 			if line == i then
 				if is_repo == true then
-					print(vim.inspect(data))
 					table.insert(lines, " " .. "author" .. ":")
 					table.insert(lines, "     " .. data.author)
 					table.insert(lines, " " .. "description" .. ":")

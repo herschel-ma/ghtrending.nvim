@@ -19,7 +19,6 @@ local function clear_buffer(buf)
 	end
 end
 
----@param buf  object
 ---@param opts  table
 local function fill_buffer(buf, opts)
 	local datas = opts.datas
@@ -51,6 +50,15 @@ local function fill_buffer(buf, opts)
 					end
 					table.insert(lines, " " .. "repository url" .. ":")
 					table.insert(lines, "     " .. data.link)
+
+					vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
+					vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
+					vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
+					-- data.build_by = nil -- set to none to avoid table render fail
+					-- display:render_table(buf.bufnr, {
+					-- 	datas = { data },
+					-- 	is_repo = is_repo,
+					-- })
 				else
 					display:render_table(buf.bufnr, { datas = { data } })
 				end
@@ -64,9 +72,6 @@ local function fill_buffer(buf, opts)
 			vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
 		end
 	end
-	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
-	-- vim.api.nvim_buf_set_lines(buf.bufnr, 0, -1, false, lines)
-	-- vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", false)
 end
 
 --- @param datas object
@@ -197,6 +202,10 @@ function display:init(datas, is_repo)
 	end, { silent = true })
 
 	layout:mount()
+
+	vim.api.nvim_win_set_option(popups.right_popup.winid, "signcolumn", "no")
+	vim.api.nvim_win_set_option(popups.right_popup.winid, "foldlevel", 100)
+	vim.api.nvim_win_set_option(popups.right_popup.winid, "wrap", false)
 end
 --- @param bufnr integer
 --- @param opts table
@@ -206,7 +215,61 @@ function display:render_table(bufnr, opts)
 	local tbl = {}
 
 	if is_repo == true then
-		tbl = nui_table({})
+		tbl = nui_table({
+			bufnr = bufnr,
+			columns = {
+				{
+					align = "center",
+					accessor_key = "name",
+					header = "Repository Name",
+				},
+				{
+					align = "center",
+					accessor_key = "author",
+					header = "Author",
+				},
+				{
+					align = "left",
+					accessor_key = "description",
+					header = "Description",
+				},
+				{
+					align = "center",
+					accessor_key = "star_count",
+					header = "Star",
+					cell = function(cell)
+						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
+					end,
+				},
+				{
+					align = "left",
+					accessor_key = "add",
+					header = "Add Trending",
+				},
+				{
+					align = "center",
+					accessor_key = "fork",
+					header = "Fork",
+					cell = function(cell)
+						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
+					end,
+				},
+				{
+					align = "center",
+					accessor_key = "language",
+					header = "Language",
+				},
+				{
+					align = "left",
+					accessor_key = "link",
+					cell = function(cell)
+						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
+					end,
+					header = "Repository url",
+				},
+			},
+			data = datas,
+		})
 	else
 		tbl = nui_table({
 			bufnr = bufnr,
@@ -217,12 +280,12 @@ function display:render_table(bufnr, opts)
 					header = "Name",
 				},
 				{
-					align = "center",
+					align = "left",
 					accessor_key = "avatar",
 					header = "Avatar",
 				},
 				{
-					align = "right",
+					align = "left",
 					accessor_key = "description",
 					cell = function(cell)
 						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
@@ -230,7 +293,7 @@ function display:render_table(bufnr, opts)
 					header = "Description",
 				},
 				{
-					align = "right",
+					align = "left",
 					accessor_key = "popular_repo",
 					cell = function(cell)
 						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
@@ -243,26 +306,25 @@ function display:render_table(bufnr, opts)
 	end
 
 	tbl:render()
-	print(vim.inspect(tbl:get_cell()))
 end
 
 -- create two custom functions for user to use
 vim.api.nvim_create_user_command("GhtrendingDev", function()
-	-- local devlopers = gh.process_developer()
-	local devlopers = {
-		{
-			name = "test1",
-			avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
-			popular_repo = "https://github.com/username/test1",
-			description = "desc test1",
-		},
-		{
-			name = "test2",
-			avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
-			popular_repo = "https://github.com/username/test2",
-			description = "desc test2",
-		},
-	}
+	local devlopers = gh.process_developer()
+	-- local devlopers = {
+	-- 	{
+	-- 		name = "test1",
+	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
+	-- 		popular_repo = "https://github.com/username/test1",
+	-- 		description = "desc test1",
+	-- 	},
+	-- 	{
+	-- 		name = "test2",
+	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
+	-- 		popular_repo = "https://github.com/username/test2",
+	-- 		description = "desc test2",
+	-- 	},
+	-- }
 	M.devlopers = devlopers or nil
 	if M.devlopers ~= nil then
 		display:init(M.devlopers)

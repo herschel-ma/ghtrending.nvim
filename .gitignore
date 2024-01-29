@@ -2,3 +2,4 @@
 lua/ghtrending_nvim.dll
 lua54.dll
 Cargo.lock
+cache*

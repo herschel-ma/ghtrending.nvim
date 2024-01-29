@@ -8,7 +8,7 @@ version = "0.1.0"
 crate-type = ["cdylib"]
 
 [dependencies]
-ghtrending = { git = "https://github.com/herschel-ma/ghtrending" }
+ghtrending = { git = "https://github.com/herschel-ma/ghtrending", version = "0.1.1" }
 mlua = { version = "0.9.4", features = [
   "luajit",
   "module",

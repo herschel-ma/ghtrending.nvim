@@ -1,6 +1,7 @@
 use futures::prelude::*;
 use serde_json::Value;
-use std::time::SystemTime;
+use std::path::PathBuf;
+use std::{env, time::SystemTime};
 use tokio::fs;
 use tokio_serde::{formats::SymmetricalJson, SymmetricallyFramed};
 use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
@@ -8,26 +9,37 @@ use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
 pub const CACHE_DEV_FILE: &str = "cache_dev.json";
 pub const CACHE_REPO_FILE: &str = "cache_repo.json";
 
+fn path_to_cache(n: &str) -> std::io::Result<PathBuf> {
+    let path = env::current_exe()?;
+    let path = path.parent().unwrap().join(n);
+    println!("The current cache dir is {}", path.display());
+
+    Ok(path)
+}
+
 #[derive(Debug, Copy, Clone)]
 pub enum FileName<'a> {
     CacheRepoFile(&'a str),
     CacheDevFile(&'a str),
 }
 
+pub fn get_cache_path(f: FileName) -> std::io::Result<PathBuf> {
+    let name = match f {
+        FileName::CacheDevFile(file) => path_to_cache(file)?,
+        FileName::CacheRepoFile(file) => path_to_cache(file)?,
+    };
+
+    Ok(name)
+}
 pub async fn cache<'a>(
     data: Value,
     f: FileName<'_>,
 ) -> Result<(), Box<dyn std::error::Error + 'a>> {
     // Open a file, create if it doesn't exist
-    let name = match f {
-        FileName::CacheDevFile(file) => file,
-        FileName::CacheRepoFile(file) => file,
-    };
-
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
-        .open(name)
+        .open(get_cache_path(f)?)
         .await?;
     // Crate a length delimited codec
     let lenght_delimited = FramedWrite::new(&mut file, LengthDelimitedCodec::new());
@@ -39,11 +51,10 @@ pub async fn cache<'a>(
 }
 
 pub async fn load<'a>(f: FileName<'_>) -> Result<Value, Box<dyn std::error::Error + 'a>> {
-    let name = match f {
-        FileName::CacheDevFile(file) => file,
-        FileName::CacheRepoFile(file) => file,
-    };
-    let file = fs::OpenOptions::new().read(true).open(name).await?;
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .open(get_cache_path(f)?)
+        .await?;
     let metadata = file.metadata().await?;
     match metadata.modified() {
         Ok(modified) => {

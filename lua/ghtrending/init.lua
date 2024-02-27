@@ -322,4 +322,65 @@ M.setup = function(opts)
 	end, { bang = true })
 end
 
+vim.api.nvim_create_user_command("GhtrendingOpenDev", function()
+	local name = vim.api.nvim_get_current_line()
+	local index
+	if name ~= nil then
+		local index_str
+		for num in string.gmatch(name, "%d+") do
+			index_str = num
+		end
+		index = tonumber(index_str)
+	else
+		index = nil
+	end
+
+	local q = M.devlopers[index]
+	if q then
+		local command
+		local os_name = vim.loop.os_uname().sysname
+
+		if os_name == "Linux" then
+			command = string.format("xdg-open '%s'", q.popular_repo)
+		elseif os_name == "Darwin" then
+			command = string.format("open '%s'", q.popular_repo)
+		else
+			-- Fallback to Windows if uname is not available or does not match Linux/Darwin.
+			command = string.format('start "" "%s"', q.popular_repo)
+		end
+
+		os.execute(command)
+	end
+end, { bang = true })
+
+vim.api.nvim_create_user_command("GhtrendingOpenRepo", function()
+	local name = vim.api.nvim_get_current_line()
+	local index
+	if name ~= nil then
+		local index_str
+		for num in string.gmatch(name, "%d+") do
+			index_str = num
+		end
+		index = tonumber(index_str)
+	else
+		index = nil
+	end
+
+	local q = M.repos[index]
+	if q then
+		local command
+		local os_name = vim.loop.os_uname().sysname
+
+		if os_name == "Linux" then
+			command = string.format("xdg-open '%s'", q.link)
+		elseif os_name == "Darwin" then
+			command = string.format("open '%s'", q.link)
+		else
+			command = string.format('start "" "%s"', q.link)
+		end
+
+		os.execute(command)
+	end
+end, { bang = true })
+
 return M

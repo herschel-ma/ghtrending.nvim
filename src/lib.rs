@@ -20,6 +20,7 @@ where
 
 #[mlua::lua_module]
 fn ghtrending_nvim(lua: &Lua) -> LuaResult<LuaTable> {
+    // TODO: build binary and push to github release
     let exports = lua.create_table()?;
     let process_devloper = lua.create_function(|lua, ()| {
         process(lua, process_devloper).map_err(|err| mlua::Error::RuntimeError(err.to_string()))

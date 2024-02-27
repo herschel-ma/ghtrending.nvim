@@ -76,9 +76,17 @@ local M = {
 
 A command `:GhtrendingRepo` present to popup a window to display github trending repos.
 
+### Open the repository under current cursor
+
+A command `:GhtrendingOpenRepo` present to open the repository under current cursor with your default web browser.
+
 ### View Trending Developers
 
 A command `:GhtrendingDev` present to popup a window to display github trending developers.
+
+### Open the developer under current cursor
+
+A command `:GhtrendingOpenDev` present to open the most popular repository of the developer under current cursor with your default web browser.
 
 ## Default Key Mappings
 

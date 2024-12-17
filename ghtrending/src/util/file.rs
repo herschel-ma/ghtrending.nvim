@@ -1,6 +1,6 @@
 use futures::prelude::*;
 use serde_json::Value;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::{env, time::SystemTime};
 use tokio::fs;
 use tokio_serde::{formats::SymmetricalJson, SymmetricallyFramed};
@@ -9,8 +9,16 @@ use tokio_util::codec::{FramedRead, FramedWrite, LengthDelimitedCodec};
 pub const CACHE_DEV_FILE: &str = "cache_dev.json";
 pub const CACHE_REPO_FILE: &str = "cache_repo.json";
 
+fn project_root() -> PathBuf {
+    Path::new(&env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .next()
+        .unwrap()
+        .to_path_buf()
+}
+
 fn path_to_cache(n: &str) -> std::io::Result<PathBuf> {
-    let path = env::current_exe()?;
+    let path = project_root();
     let path = path.parent().unwrap().join(n);
     println!("The current cache dir is {}", path.display());
 
@@ -36,10 +44,11 @@ pub async fn cache<'a>(
     f: FileName<'_>,
 ) -> Result<(), Box<dyn std::error::Error + 'a>> {
     // Open a file, create if it doesn't exist
+    let file_path = get_cache_path(f)?;
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
-        .open(get_cache_path(f)?)
+        .open(file_path)
         .await?;
     // Crate a length delimited codec
     let lenght_delimited = FramedWrite::new(&mut file, LengthDelimitedCodec::new());

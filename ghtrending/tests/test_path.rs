@@ -34,4 +34,18 @@ mod tests {
         let path = project_root();
         println!("project path: {:?}", path.display())
     }
+
+    #[tokio::test]
+    async fn test_create_file_not_exit() {
+        let path = project_root().join("test.txt");
+        let file = tokio::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(path)
+            .await;
+        match file {
+            Ok(f) => println!("{:?} created!", f),
+            Err(e) => panic!("Failed to read file: {}", e),
+        }
+    }
 }

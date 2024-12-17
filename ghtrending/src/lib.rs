@@ -297,7 +297,7 @@ pub async fn process_repo() -> Result<Vec<UserDataType>, Box<dyn Error>> {
             eprintln!("ERR: {:?}", err);
             // tracing_subscriber::fmt::init();
             // TODO: proxy string should be parsed from lua configuration.
-            let client = init_client(Some(String::from("http://127.0.0.1:7897")))?;
+            let client = init_client(None)?;
             let res = client.get("https://github.com/trending").send().await?;
             // assert!(res.status().is_success());
             let text = res.text().await?;
@@ -323,7 +323,7 @@ pub async fn process_devloper() -> Result<Vec<UserDataType>, Box<dyn Error>> {
         }
         Err(err) => {
             eprintln!("ERR: {:?}", err);
-            let client = init_client(Some(String::from("http://127.0.0.1:7897")))?;
+            let client = init_client(None)?;
             let res = client
                 .get("https://github.com/trending/developers")
                 .send()

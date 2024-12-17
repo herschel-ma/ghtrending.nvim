@@ -1,7 +1,7 @@
 local M = {}
 local display = {}
 
-local gh = require("ghtrending_nvim")
+local gh = require("gh.rust")
 local ns = vim.api.nvim_create_namespace("ghtrending")
 
 local nui_text = require("nui.text")
@@ -9,6 +9,7 @@ local nui_popup = require("nui.popup")
 local nui_layout = require("nui.layout")
 local nui_table = require("nui.table")
 local event = require("nui.utils.autocmd").event
+local config = require("ghtrending.config")
 
 local function clear_buffer(buf)
 	vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
@@ -31,24 +32,24 @@ local function fill_buffer(buf, opts)
 		for i, data in ipairs(datas) do
 			if line == i then
 				if is_repo == true then
-					table.insert(lines, " " .. "author" .. ":")
+					table.insert(lines, " " .. config.segment.author .. ":")
 					table.insert(lines, "     " .. data.author)
-					table.insert(lines, " " .. "description" .. ":")
+					table.insert(lines, " " .. config.segment.description .. ":")
 					table.insert(lines, "     " .. data.description)
-					table.insert(lines, " " .. "star number" .. ":")
+					table.insert(lines, " " .. config.segment.star_count .. ":")
 					table.insert(lines, "     " .. data.star_count)
-					table.insert(lines, " " .. "add trending" .. ":")
+					table.insert(lines, " " .. config.segment.add .. ":")
 					table.insert(lines, "     " .. data.add)
-					table.insert(lines, " " .. "fork number" .. ":")
+					table.insert(lines, " " .. config.segment.forks .. ":")
 					table.insert(lines, "     " .. data.forks)
-					table.insert(lines, " " .. "language" .. ":")
+					table.insert(lines, " " .. config.segment.language .. ":")
 					table.insert(lines, "     " .. data.language)
-					table.insert(lines, " " .. "build by" .. ":")
+					table.insert(lines, " " .. config.segment.build_by .. ":")
 					for j, collaborator in ipairs(data.build_by) do
 						table.insert(lines, "     " .. j .. "." .. collaborator.name)
 						table.insert(lines, "         " .. collaborator.avatar)
 					end
-					table.insert(lines, " " .. "repository url" .. ":")
+					table.insert(lines, " " .. config.segment.link .. ":")
 					table.insert(lines, "     " .. data.link)
 
 					vim.api.nvim_buf_set_option(buf.bufnr, "modifiable", true)
@@ -75,13 +76,13 @@ local function fill_buffer(buf, opts)
 end
 
 --- @param datas object
---- @param is_repo? boolean
-function display:init(datas, is_repo)
+--- @param opts table
+function display:init(datas, opts)
 	-- NUI elements(two popups)
-	if is_repo == true then
-		self.span = "repos"
+	if opts.is_repo == true then
+		self.span = config.segment.span_repo
 	else
-		self.span = "devlopers"
+		self.span = config.segment.span_dev
 	end
 
 	local span_name = {
@@ -92,7 +93,7 @@ function display:init(datas, is_repo)
 		left_popup = nui_popup({
 			enter = true,
 			border = {
-				style = "single",
+				style = config.popup.border.style,
 				text = span_name,
 			},
 			buf_options = {
@@ -100,8 +101,8 @@ function display:init(datas, is_repo)
 				readonly = true,
 			},
 			win_options = {
-				winblend = 25,
-				winhighlight = "Normal:NormalFloat,FloatBorder:LineNr",
+				winblend = config.popup.win_options.winblend,
+				winhighlight = config.popup.win_options.winhighlight,
 			},
 			ns_id = ns,
 		}),
@@ -112,36 +113,25 @@ function display:init(datas, is_repo)
 				modifiable = true,
 				readonly = false,
 			},
-			win_options = {
-				winblend = 25,
-				winhighlight = "Normal:NormalFloat,FloatBorder:LineNr",
-				scrolloff = 3,
-			},
+			win_options = config.popup.win_options,
 			ns_id = ns,
 		}),
 	}
 
 	local layout = nui_layout(
-		{
-			relative = "editor",
-			position = "50%",
-			size = {
-				width = "80%",
-				height = "50%",
-			},
-		},
+		config.layout,
 		nui_layout.Box({
-			nui_layout.Box(popups.left_popup, { size = "30%" }),
-			nui_layout.Box(popups.right_popup, { size = "70%" }),
+			nui_layout.Box(popups.left_popup, { size = config.left_popup_size }),
+			nui_layout.Box(popups.right_popup, { size = config.right_popup_size }),
 		}, { dir = "row", grow = 1 })
 	)
 
 	vim.api.nvim_buf_set_option(popups.right_popup.bufnr, "filetype", "ghtrending")
-	fill_buffer(popups.left_popup, { datas = datas, is_repo = is_repo })
+	fill_buffer(popups.left_popup, { datas = datas, is_repo = opts.is_repo })
 	-- Autocmds
 	popups.left_popup:on(event.CursorMoved, function()
 		local line, _ = unpack(vim.api.nvim_win_get_cursor(popups.left_popup.winid))
-		fill_buffer(popups.right_popup, { datas = datas, line = line, is_repo = is_repo })
+		fill_buffer(popups.right_popup, { datas = datas, line = line, is_repo = opts.is_repo })
 	end)
 
 	for _, p in pairs(popups) do
@@ -188,6 +178,7 @@ function display:render_table(bufnr, opts)
 
 	if is_repo == true then
 		tbl = nui_table({
+			ns_id = ns,
 			bufnr = bufnr,
 			columns = {
 				{
@@ -244,6 +235,7 @@ function display:render_table(bufnr, opts)
 		})
 	else
 		tbl = nui_table({
+			ns_id = ns,
 			bufnr = bufnr,
 			columns = {
 				{
@@ -280,41 +272,114 @@ function display:render_table(bufnr, opts)
 	tbl:render()
 end
 
--- create two custom functions for user to use
-vim.api.nvim_create_user_command("GhtrendingDev", function()
-	local devlopers = gh.process_developer()
-	-- local devlopers = {
-	-- 	{
-	-- 		name = "test1",
-	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
-	-- 		popular_repo = "https://github.com/username/test1",
-	-- 		description = "desc test1",
-	-- 	},
-	-- 	{
-	-- 		name = "test2",
-	-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
-	-- 		popular_repo = "https://github.com/username/test2",
-	-- 		description = "desc test2",
-	-- 	},
-	-- }
-	M.devlopers = devlopers or nil
-	if M.devlopers ~= nil then
-		display:init(M.devlopers)
+--- @param opts? table
+M.setup = function(opts)
+	opts = opts or {}
+	for key, value in pairs(opts) do
+		if config[key] ~= nil then
+			config[key] = value
+		end
+	end
+	-- create two custom functions for user to use
+	vim.api.nvim_create_user_command("GhtrendingDev", function()
+		local devlopers = gh.process_developer()
+		-- local devlopers = {
+		-- 	{
+		-- 		name = "test1",
+		-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=4",
+		-- 		popular_repo = "https://github.com/username/test1",
+		-- 		description = "desc test1",
+		-- 	},
+		-- 	{
+		-- 		name = "test2",
+		-- 		avatar = "https://avatars.githubusercontent.com/u/10101010?v=5",
+		-- 		popular_repo = "https://github.com/username/test2",
+		-- 		description = "desc test2",
+		-- 	},
+		-- }
+		M.devlopers = devlopers or nil
+		if M.devlopers ~= nil then
+			display:init(M.devlopers, { is_repo = false })
+		else
+			vim.notify(
+				"GitHub Api Developers are nil! Run `:checkhealth ghtrending` for more info.",
+				vim.log.levels.ERROR
+			)
+		end
+	end, { bang = true })
+
+	vim.api.nvim_create_user_command("GhtrendingRepo", function()
+		local repos = gh.process_repo()
+		M.repos = repos or nil
+		if M.repos ~= nil then
+			display:init(M.repos, { is_repo = true })
+		else
+			vim.notify(
+				"GitHub Api Repositories are nil! Run `:checkhealth ghtrending` for more info.",
+				vim.log.levels.ERROR
+			)
+		end
+	end, { bang = true })
+end
+
+vim.api.nvim_create_user_command("GhtrendingOpenDev", function()
+	local name = vim.api.nvim_get_current_line()
+	local index
+	if name ~= nil then
+		local index_str
+		for num in string.gmatch(name, "%d+") do
+			index_str = num
+		end
+		index = tonumber(index_str)
 	else
-		vim.notify("GitHub Api Developers are nil! Run `:checkhealth ghtrending` for more info.", vim.log.levels.ERROR)
+		index = nil
+	end
+
+	local q = M.devlopers[index]
+	if q then
+		local command
+		local os_name = vim.loop.os_uname().sysname
+
+		if os_name == "Linux" then
+			command = string.format("xdg-open '%s'", q.popular_repo)
+		elseif os_name == "Darwin" then
+			command = string.format("open '%s'", q.popular_repo)
+		else
+			-- Fallback to Windows if uname is not available or does not match Linux/Darwin.
+			command = string.format('start "" "%s"', q.popular_repo)
+		end
+
+		os.execute(command)
 	end
 end, { bang = true })
 
-vim.api.nvim_create_user_command("GhtrendingRepo", function()
-	local repos = gh.process_repo()
-	M.repos = repos or nil
-	if M.repos ~= nil then
-		display:init(M.repos, true)
+vim.api.nvim_create_user_command("GhtrendingOpenRepo", function()
+	local name = vim.api.nvim_get_current_line()
+	local index
+	if name ~= nil then
+		local index_str
+		for num in string.gmatch(name, "%d+") do
+			index_str = num
+		end
+		index = tonumber(index_str)
 	else
-		vim.notify(
-			"GitHub Api Repositories are nil! Run `:checkhealth ghtrending` for more info.",
-			vim.log.levels.ERROR
-		)
+		index = nil
+	end
+
+	local q = M.repos[index]
+	if q then
+		local command
+		local os_name = vim.loop.os_uname().sysname
+
+		if os_name == "Linux" then
+			command = string.format("xdg-open '%s'", q.link)
+		elseif os_name == "Darwin" then
+			command = string.format("open '%s'", q.link)
+		else
+			command = string.format('start "" "%s"', q.link)
+		end
+
+		os.execute(command)
 	end
 end, { bang = true })
 

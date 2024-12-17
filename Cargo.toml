@@ -2,13 +2,13 @@
 authors = ["herschelma666@gmail.com"]
 edition = "2021"
 name = "ghtrending_nvim"
-version = "0.1.0"
+version = "0.1.1"
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
-ghtrending = { path = "../ghtrending" }
+ghtrending = { path = "ghtrending", version = "0.1.2" }
 mlua = { version = "0.9.4", features = [
   "luajit",
   "module",

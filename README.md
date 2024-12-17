@@ -20,11 +20,7 @@ return {
     "herschel-ma/ghtrending_nvim",
     dependencies = { "MunifTanjim/nui.nvim" },
     -- windows && nu
-    build = "cargo build --release; mv -f target/release/ghtrending_nvim.dll  lua/ghtrending_nvim.dll",
-    -- linux && bash(not test)
-    -- build = "cargo build --release && mv target/release/ghtrending_nvim.so lua/ghtrending_nvim.so"
-    -- macos && bash(not test)
-    -- build = "cargo build --release && mv target/release/ghtrending_nvim.dylib lua/ghtrending_nvim.dll"
+    build = "cargo build --release; "
     config = function()
       require("ghtrending").setup({
         -- set your config here

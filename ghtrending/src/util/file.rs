@@ -20,7 +20,7 @@ fn project_root() -> PathBuf {
 fn path_to_cache(n: &str) -> std::io::Result<PathBuf> {
     let path = project_root();
     let path = path.parent().unwrap().join(n);
-    println!("The current cache dir is {}", path.display());
+    // println!("The current cache dir is {}", path.display());
 
     Ok(path)
 }
@@ -73,7 +73,7 @@ pub async fn load<'a>(f: FileName<'_>) -> Result<Value, Box<dyn std::error::Erro
             if elapsed.as_secs() > 60 * 60 * 12 {
                 Err("Data expired".into())
             } else {
-                println!("cache hit!!!");
+                // println!("cache hit!!!");
                 // Delimit frames using a length header
                 let length_delimited = FramedRead::new(file, LengthDelimitedCodec::new());
                 // Deserialize frames

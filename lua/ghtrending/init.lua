@@ -1,7 +1,7 @@
 local M = {}
 local display = {}
 
-local gh = require("ghtrending_nvim")
+local gh = require("gh.rust")
 local ns = vim.api.nvim_create_namespace("ghtrending")
 
 local nui_text = require("nui.text")

@@ -1,3 +1,4 @@
+use mlua::Lua;
 use mlua::UserData;
 use scraper::{Html, Selector};
 use serde::{Deserialize, Serialize};
@@ -7,6 +8,9 @@ use std::fmt::Debug;
 mod util;
 pub use util::{cache, load, FileName, CACHE_DEV_FILE, CACHE_REPO_FILE};
 // use tracing::info;
+
+const DATA_EXPIRED: &str = "Data expired";
+const NO_DATA: &str = "No data";
 
 trait Trending: Debug + Default {
     /// parse_html is the process to grap info from
@@ -287,42 +291,45 @@ fn init_client(proxy: Option<String>) -> Result<reqwest::Client, Box<dyn Error>>
 #[tokio::main]
 pub async fn process_repo() -> Result<Vec<UserDataType>, Box<dyn Error>> {
     let f = FileName::CacheRepoFile(CACHE_REPO_FILE);
-    match load(f).await {
-        Ok(data) => {
-            let data: Vec<Repository> = serde_json::from_value(data)?;
-            let data: Vec<UserDataType> = data.into_iter().map(UserDataType::Repository).collect();
-            return Ok(data);
-        }
+    let lua = Lua::new();
+    let data = match load(f).await {
+        Ok(data) => data,
         Err(err) => {
-            eprintln!("ERR: {:?}", err);
+            if err.to_string() != DATA_EXPIRED && err.to_string() != NO_DATA {
+                lua.globals().set("err_info", err.to_string()).unwrap();
+                lua.load(r"# print(vim.notify(err_info))").exec().unwrap();
+            }
             // tracing_subscriber::fmt::init();
-            // TODO: proxy string should be parsed from lua configuration.
             let client = init_client(None)?;
             let res = client.get("https://github.com/trending").send().await?;
-            // assert!(res.status().is_success());
+            assert!(res.status().is_success());
             let text = res.text().await?;
             let repos = Repository::parse_html(text);
             // let repo_json = serde_json::to_string_pretty(&repos).unwrap();
             // info!("{repo_json}");
-            cache(serde_json::to_value(repos.clone())?, f).await?;
-            let data: Vec<UserDataType> = repos.into_iter().map(UserDataType::Repository).collect();
-            return Ok(data);
+            let repos = serde_json::to_value(repos.clone())?;
+            cache(repos.clone(), f).await?;
+            repos
         }
-    }
+    };
+
+    let data: Vec<Repository> = serde_json::from_value(data)?;
+    let result: Vec<UserDataType> = data.into_iter().map(UserDataType::Repository).collect();
+    return Ok(result);
 }
 
 /// process_devloper represents the process of get developers.
 #[tokio::main]
 pub async fn process_devloper() -> Result<Vec<UserDataType>, Box<dyn Error>> {
     let f = FileName::CacheDevFile(CACHE_DEV_FILE);
-    match load(f).await {
-        Ok(data) => {
-            let data: Vec<Developer> = serde_json::from_value(data)?;
-            let data: Vec<UserDataType> = data.into_iter().map(UserDataType::Developer).collect();
-            return Ok(data);
-        }
+    let lua = Lua::new();
+    let data = match load(f).await {
+        Ok(data) => data,
         Err(err) => {
-            eprintln!("ERR: {:?}", err);
+            if err.to_string() != DATA_EXPIRED && err.to_string() != NO_DATA {
+                lua.globals().set("err_info", err.to_string()).unwrap();
+                lua.load(r"# print(vim.notify(err_info))").exec().unwrap();
+            }
             let client = init_client(None)?;
             let res = client
                 .get("https://github.com/trending/developers")
@@ -333,12 +340,13 @@ pub async fn process_devloper() -> Result<Vec<UserDataType>, Box<dyn Error>> {
             let developers = Developer::parse_html(text);
             // let developer_json = serde_json::to_string_pretty(&developers).unwrap();
             // info!("{developer_json}");
-            cache(serde_json::to_value(developers.clone())?, f).await?;
-            let data: Vec<UserDataType> = developers
-                .into_iter()
-                .map(UserDataType::Developer)
-                .collect();
-            return Ok(data);
+            let developers = serde_json::to_value(developers)?;
+            cache(developers.clone(), f).await?;
+            developers
         }
     };
+
+    let data: Vec<Developer> = serde_json::from_value(data)?;
+    let result: Vec<UserDataType> = data.into_iter().map(UserDataType::Developer).collect();
+    return Ok(result);
 }

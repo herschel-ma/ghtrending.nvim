@@ -241,12 +241,12 @@ function display:render_table(bufnr, opts)
 				{
 					align = "center",
 					accessor_key = "name",
-					header = "Name",
+					header = config.segment.name,
 				},
 				{
 					align = "left",
 					accessor_key = "avatar",
-					header = "Avatar",
+					header = config.segment.avatar,
 				},
 				{
 					align = "left",
@@ -254,7 +254,7 @@ function display:render_table(bufnr, opts)
 					cell = function(cell)
 						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
 					end,
-					header = "Description",
+					header = config.segment.description,
 				},
 				{
 					align = "left",
@@ -262,7 +262,7 @@ function display:render_table(bufnr, opts)
 					cell = function(cell)
 						return nui_text(tostring(cell.get_value()), "DiagnosticInfo")
 					end,
-					header = "Popular Repository",
+					header = config.segment.span_repo,
 				},
 			},
 			data = datas,

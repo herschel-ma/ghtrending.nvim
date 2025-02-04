@@ -380,23 +380,3 @@ fn ghtrending_nvim(lua: &Lua) -> LuaResult<LuaTable> {
     exports.set("process_repo", process_repo)?;
     Ok(exports)
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use mlua::{chunk, Lua, Result};
-//     #[test]
-//     fn test_repository_state() -> Result<()> {
-//         // create a lua state
-//         let lua = Lua::new();
-//         let repo = Repository {
-//             name: "test".into(),
-//             ..Default::default()
-//         };
-//         lua.load(chunk! {
-//             local rep = $repo
-//             assert(rep.name == "test")
-//         })
-//         .exec()
-//     }
-// }

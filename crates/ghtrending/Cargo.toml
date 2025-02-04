@@ -1,0 +1,36 @@
+[lib]
+crate-type = ["cdylib"]
+
+[package]
+name = "ghtrending_nvim"
+version = "0.1.2"
+edition = "2021"
+
+[lints]
+workspace = true
+
+[dependencies]
+reqwest = { workspace = true }
+scraper = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+futures = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+tokio-serde = { workspace = true, features = [
+  "serde_json",
+  "bincode",
+  "json",
+  "bincode",
+] }
+tokio-util = { workspace = true, features = ["codec"] }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+mlua = { workspace = true, features = [
+  "luajit",
+  "module",
+  "async",
+  "send",
+  "serde",
+  "serialize",
+  'macros',
+] }

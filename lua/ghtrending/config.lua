@@ -38,6 +38,7 @@ M.translate = function()
       language = '语言',
       build_by = '协作者',
       link = '仓库地址',
+      info = '信息',
     }
   else
     return {
@@ -53,6 +54,7 @@ M.translate = function()
       language = 'Language',
       build_by = 'Collaborator',
       link = 'Repository url',
+      info = 'info',
     }
   end
 end

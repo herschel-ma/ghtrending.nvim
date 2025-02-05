@@ -89,6 +89,11 @@ function display:init(datas, opts)
     bottom = nui_text(self.span),
     bottom_align = 'center',
   }
+  local span_info_name = {
+    bottom = nui_text(config.segment.info),
+    bottom_align = 'center',
+  }
+
   local popups = {
     left_popup = nui_popup({
       enter = true,
@@ -108,7 +113,10 @@ function display:init(datas, opts)
     }),
     right_popup = nui_popup({
       focusable = true,
-      border = 'single',
+      border = {
+        style = config.popup.border.style,
+        text = span_info_name,
+      },
       buf_options = {
         modifiable = true,
         readonly = false,
@@ -165,10 +173,12 @@ function display:init(datas, opts)
 
   layout:mount()
 
+  -- set options
   vim.api.nvim_win_set_option(popups.right_popup.winid, 'signcolumn', 'no')
   vim.api.nvim_win_set_option(popups.right_popup.winid, 'foldlevel', 100)
-  vim.api.nvim_win_set_option(popups.right_popup.winid, 'wrap', false)
+  if not opts.is_repo then vim.api.nvim_win_set_option(popups.right_popup.winid, 'wrap', false) end
 end
+
 --- @param bufnr integer
 --- @param opts table
 function display:render_table(bufnr, opts)
@@ -320,7 +330,7 @@ vim.api.nvim_create_user_command('GhtrendingOpenDev', function()
   local q = M.devlopers[index]
   if q then
     local command
-    local os_name = vim.loop.os_uname().sysname
+    local os_name = vim.loop.os_name().sysname
 
     if os_name == 'Linux' then
       command = string.format("xdg-open '%s'", q.popular_repo)

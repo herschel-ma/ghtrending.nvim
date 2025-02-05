@@ -1,7 +1,7 @@
+local cfg = require('ghtrending.config')
 local eq = assert.are.same
-describe("ghtrending", function()
-	it("require module", function()
-		local M = require("ghtrending_nvim")
-		assert(M ~= nil)
-	end)
+
+describe('ghtrending plugin', function()
+  it('should load module', function() assert(cfg ~= nil) end)
+  it('should read config', function() eq(cfg.chinese, true) end)
 end)

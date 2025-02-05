@@ -17,12 +17,12 @@ fn project_root() -> PathBuf {
         .to_path_buf()
 }
 
-fn path_to_cache(n: &str) -> std::io::Result<PathBuf> {
+fn path_to_cache(n: &str) -> std::path::PathBuf {
     let path = project_root();
     let path = path.parent().unwrap().join(n);
     // println!("The current cache dir is {}", path.display());
 
-    Ok(path)
+    path
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -31,23 +31,22 @@ pub enum FileName<'a> {
     CacheDevFile(&'a str),
 }
 
-pub fn get_cache_path(f: FileName) -> std::io::Result<PathBuf> {
-    let name = match f {
-        FileName::CacheDevFile(file) => path_to_cache(file)?,
-        FileName::CacheRepoFile(file) => path_to_cache(file)?,
-    };
-
-    Ok(name)
+pub(crate) fn get_cache_path(f: FileName) -> std::path::PathBuf {
+    match f {
+        FileName::CacheDevFile(file) | FileName::CacheRepoFile(file) => path_to_cache(file),
+    }
 }
+
 pub async fn cache<'a>(
     data: Value,
     f: FileName<'_>,
 ) -> Result<(), Box<dyn std::error::Error + 'a>> {
     // Open a file, create if it doesn't exist
-    let file_path = get_cache_path(f)?;
+    let file_path = get_cache_path(f);
     let mut file = fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(file_path)
         .await?;
     // Crate a length delimited codec
@@ -62,7 +61,7 @@ pub async fn cache<'a>(
 pub async fn load<'a>(f: FileName<'_>) -> Result<Value, Box<dyn std::error::Error + 'a>> {
     let file = fs::OpenOptions::new()
         .read(true)
-        .open(get_cache_path(f)?)
+        .open(get_cache_path(f))
         .await?;
     let metadata = file.metadata().await?;
     match metadata.modified() {

@@ -1,3 +1,4 @@
+use mlua::prelude::*;
 use mlua::Lua;
 use mlua::UserData;
 use scraper::{Html, Selector};
@@ -13,7 +14,7 @@ const DATA_EXPIRED: &str = "Data expired";
 const NO_DATA: &str = "No data";
 
 trait Trending: Debug + Default {
-    /// parse_html is the process to grap info from
+    /// `parse_html` is the process to grap info from
     /// github http trending api response html.
     fn parse_html(content: String) -> Vec<Self>
     where
@@ -47,14 +48,14 @@ pub struct Developer {
     pub description: String,
 }
 impl UserData for Collaborator {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("avatar", |_, this| Ok(this.avatar.clone()));
     }
 }
 
 impl UserData for Repository {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("author", |_, this| Ok(this.author.clone()));
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("link", |_, this| Ok(this.link.clone()));
@@ -68,7 +69,7 @@ impl UserData for Repository {
 }
 
 impl UserData for Developer {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("avatar", |_, this| Ok(this.avatar.clone()));
         fields.add_field_method_get("popular_repo", |_, this| Ok(this.popular_repo.clone()));
@@ -87,11 +88,11 @@ impl UserData for UserDataType {}
 impl Trending for Repository {
     fn parse_html(content: String) -> Vec<Self> {
         let doucument = Html::parse_document(&content);
-        let p_selector = Selector::parse(r#"p"#).unwrap();
-        let a_selector = Selector::parse(r#"a"#).unwrap();
-        let img_selector = Selector::parse(r#"img"#).unwrap();
-        let div_selector = Selector::parse(r#"div"#).unwrap();
-        let span_selector = Selector::parse(r#"span"#).unwrap();
+        let p_selector = Selector::parse(r"p").unwrap();
+        let a_selector = Selector::parse(r"a").unwrap();
+        let img_selector = Selector::parse(r"img").unwrap();
+        let div_selector = Selector::parse(r"div").unwrap();
+        let span_selector = Selector::parse(r"span").unwrap();
         let h2_selector = Selector::parse(r#"h2[class="h3 lh-condensed"]"#).unwrap();
         let article_selector = Selector::parse(r#"article[class="Box-row"]"#).unwrap();
         let program_span_sel = Selector::parse(r#"span[itemprop="programmingLanguage"]"#).unwrap();
@@ -121,7 +122,7 @@ impl Trending for Repository {
 
             let repo_link = a_link.value().attr("href").unwrap();
             url.push_str(repo_link);
-            repo.link = url.clone();
+            repo.link.clone_from(&url);
             url = url.replace(repo_link, "");
 
             let tmp = a_link
@@ -130,7 +131,7 @@ impl Trending for Repository {
                 .into_iter()
                 .map(|e| e.to_string().trim().to_owned())
                 .collect::<String>()
-                .to_owned();
+                .clone();
 
             let name_vec = tmp.split(' ').collect::<Vec<_>>();
             repo.author = name_vec[0].to_string();
@@ -189,14 +190,13 @@ impl Trending for Repository {
 
             let mut collaborators = vec![];
 
-            for col_a_link in spans.get(1).unwrap().select(&a_selector) {
+            for col_a_link in spans[1].select(&a_selector) {
                 let mut collaborator = Collaborator::default();
                 let col_avator_img = col_a_link.select(&img_selector).next().unwrap();
                 collaborator.name = col_avator_img
                     .value()
                     .attr("alt")
                     .unwrap()
-                    .to_string()
                     .split('@')
                     .collect();
 
@@ -217,11 +217,11 @@ impl Trending for Developer {
     fn parse_html(content: String) -> Vec<Self> {
         let document = Html::parse_document(&content);
         let article_sel = Selector::parse(r#"article[class="Box-row d-flex"]"#).unwrap();
-        let art_sel = Selector::parse(r#"article"#).unwrap();
-        let div_sel = Selector::parse(r#"div"#).unwrap();
-        let img_sel = Selector::parse(r#"img"#).unwrap();
-        let h1_sel = Selector::parse(r#"h1"#).unwrap();
-        let a_sel = Selector::parse(r#"a"#).unwrap();
+        let art_sel = Selector::parse(r"article").unwrap();
+        let div_sel = Selector::parse(r"div").unwrap();
+        let img_sel = Selector::parse(r"img").unwrap();
+        let h1_sel = Selector::parse(r"h1").unwrap();
+        let a_sel = Selector::parse(r"a").unwrap();
 
         let mut developers = vec![];
         let mut url = "https://github.com".to_string();
@@ -275,16 +275,13 @@ impl Trending for Developer {
 }
 
 fn init_client(proxy: Option<String>) -> Result<reqwest::Client, Box<dyn Error>> {
-    match proxy {
-        Some(pro_str) => {
-            let pro = reqwest::Proxy::all(pro_str)?;
-            let client = reqwest::Client::builder().proxy(pro).build()?;
-            Ok(client)
-        }
-        None => {
-            let client = reqwest::Client::builder().build()?;
-            Ok(client)
-        }
+    if let Some(pro_str) = proxy {
+        let pro = reqwest::Proxy::all(pro_str)?;
+        let client = reqwest::Client::builder().proxy(pro).build()?;
+        Ok(client)
+    } else {
+        let client = reqwest::Client::builder().build()?;
+        Ok(client)
     }
 }
 /// process_repo represents the process of get repositories.
@@ -350,3 +347,56 @@ pub async fn process_devloper() -> Result<Vec<UserDataType>, Box<dyn Error>> {
     let result: Vec<UserDataType> = data.into_iter().map(UserDataType::Developer).collect();
     return Ok(result);
 }
+
+fn process<F>(lua: &Lua, f: F) -> LuaResult<LuaTable>
+where
+    F: Fn() -> Result<Vec<UserDataType>, Box<dyn std::error::Error>>,
+{
+    let datas = f()
+        .map_err(|e| mlua::Error::RuntimeError(format!("Error: {e}")))
+        .unwrap();
+    let array_table = lua.create_table()?;
+
+    for (i, data) in datas.into_iter().enumerate() {
+        match data {
+            UserDataType::Repository(repo) => array_table.set(i + 1, repo)?,
+            UserDataType::Developer(dev) => array_table.set(i + 1, dev)?,
+        };
+    }
+    Ok(array_table)
+}
+
+#[mlua::lua_module]
+fn ghtrending_nvim(lua: &Lua) -> LuaResult<LuaTable> {
+    let exports = lua.create_table()?;
+    let process_devloper = lua.create_function(|lua, ()| {
+        process(lua, process_devloper).map_err(|err| mlua::Error::RuntimeError(err.to_string()))
+    })?;
+    let process_repo = lua.create_function(|lua, ()| {
+        process(lua, process_repo).map_err(|err| mlua::Error::RuntimeError(err.to_string()))
+    })?;
+
+    exports.set("process_developer", process_devloper)?;
+    exports.set("process_repo", process_repo)?;
+    Ok(exports)
+}
+
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
+//     use mlua::{chunk, Lua, Result};
+//     #[test]
+//     fn test_repository_state() -> Result<()> {
+//         // create a lua state
+//         let lua = Lua::new();
+//         let repo = Repository {
+//             name: "test".into(),
+//             ..Default::default()
+//         };
+//         lua.load(chunk! {
+//             local rep = $repo
+//             assert(rep.name == "test")
+//         })
+//         .exec()
+//     }
+// }

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/*"]
+members = ["crates/ghtrending_nvim"]
 resolver = "2"
 
 [workspace.package]
@@ -9,7 +9,6 @@ version = "0.1.1"
 
 
 [workspace.dependencies]
-ghtrending = { path = "./ghtrending" }
 reqwest = "0.11.22"
 scraper = "0.18.1"
 serde = { version = "1.0.9", features = ["derive"] }
@@ -56,8 +55,9 @@ similar_names = "allow"
 too_many_lines = "allow"
 too_many_arguments = "allow"
 # Disallowed restriction lints
-print_stdout = "warn"
-print_stderr = "warn"
+# print_stdout = "warn"
+# print_stderr = "warn"
+uninlined_format_args = "forbid"
 dbg_macro = "warn"
 empty_drop = "warn"
 empty_structs_with_brackets = "warn"

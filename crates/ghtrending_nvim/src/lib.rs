@@ -48,14 +48,14 @@ pub struct Developer {
     pub description: String,
 }
 impl UserData for Collaborator {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("avatar", |_, this| Ok(this.avatar.clone()));
     }
 }
 
 impl UserData for Repository {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("author", |_, this| Ok(this.author.clone()));
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("link", |_, this| Ok(this.link.clone()));
@@ -69,7 +69,7 @@ impl UserData for Repository {
 }
 
 impl UserData for Developer {
-    fn add_fields<'lua, F: mlua::UserDataFields<'lua, Self>>(fields: &mut F) {
+    fn add_fields<F: mlua::UserDataFields<Self>>(fields: &mut F) {
         fields.add_field_method_get("name", |_, this| Ok(this.name.clone()));
         fields.add_field_method_get("avatar", |_, this| Ok(this.avatar.clone()));
         fields.add_field_method_get("popular_repo", |_, this| Ok(this.popular_repo.clone()));

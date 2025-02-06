@@ -164,6 +164,8 @@ function display:init(datas, opts)
     { silent = true }
   )
 
+  popups.right_popup:map('n', 'q', function() layout:unmount() end, { silent = true })
+  popups.right_popup:map('n', '<esc>', function() layout:unmount() end, { silent = true })
   popups.right_popup:map(
     'n',
     'H',

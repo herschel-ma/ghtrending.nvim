@@ -330,7 +330,7 @@ vim.api.nvim_create_user_command('GhtrendingOpenDev', function()
   local q = M.devlopers[index]
   if q then
     local command
-    local os_name = vim.loop.os_name().sysname
+    local os_name = vim.loop.os_uname().sysname
 
     if os_name == 'Linux' then
       command = string.format("xdg-open '%s'", q.popular_repo)

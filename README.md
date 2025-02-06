@@ -17,14 +17,26 @@ Example using `lazy.nvim`:
 ```lua
 return {
   {
-    "herschel-ma/ghtrending_nvim",
+    "herschel-ma/ghtrending.nvim",
+    -- dev = true,
     dependencies = { "MunifTanjim/nui.nvim" },
-    -- windows && nu
-    build = "cargo build --release"
+    build = "cargo build --release",
     config = function()
-      require("ghtrending").setup({
-        -- set your config here
-      })
+      require("ghtrending").setup()
+      vim.keymap.set(
+        { "n", "v" },
+        "<leader>gtr",
+        "<cmd>GhtrendingRepo<cr>",
+        { silent = true, desc = "View Trednging Repos." }
+      )
+      vim.keymap.set(
+        { "n", "v" },
+        "<leader>gtd",
+        "<cmd>GhtrendingDev<cr>",
+        { silent = true, desc = "View Trending Developers" }
+      )
+      vim.api.nvim_set_keymap("n", "<leader>gtod", "<cmd>GhtrendingOpenDev<cr>", { silent = true, noremap = true })
+      vim.api.nvim_set_keymap("n", "<leader>gtor", "<cmd>GhtrendingOpenRepo<cr>", { silent = true, noremap = true })
     end,
   },
 }
@@ -84,7 +96,7 @@ A command `:GhtrendingDev` present to popup a window to display github trending 
 
 A command `:GhtrendingOpenDev` present to open the most popular repository of the developer under current cursor with your default web browser.
 
-## Default Key Mappings
+## Default Key Mappings on popup windows
 
 Left pane:
 
@@ -103,6 +115,8 @@ end, { silent = true })
 Right pane:
 
 ```lua
+popups.right_popup:map('n', 'q', function() layout:unmount() end, { silent = true })
+popups.right_popup:map('n', '<esc>', function() layout:unmount() end, { silent = true })
 popups.right_popup:map("n", "H", function()
   vim.api.nvim_set_current_win(popups.left_popup.winid)
 end, { silent = true })

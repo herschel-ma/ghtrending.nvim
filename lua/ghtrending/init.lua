@@ -163,6 +163,12 @@ function display:init(datas, opts)
     function() vim.api.nvim_set_current_win(popups.right_popup.winid) end,
     { silent = true }
   )
+  popups.left_popup:map(
+    'n',
+    '<cr>',
+    function() vim.api.nvim_set_current_win(popups.right_popup.winid) end,
+    { silent = true }
+  )
 
   popups.right_popup:map('n', 'q', function() layout:unmount() end, { silent = true })
   popups.right_popup:map('n', '<esc>', function() layout:unmount() end, { silent = true })

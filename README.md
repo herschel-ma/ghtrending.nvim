@@ -110,6 +110,12 @@ end, { silent = true })
 popups.left_popup:map("n", "L", function()
   vim.api.nvim_set_current_win(popups.right_popup.winid)
 end, { silent = true })
+popups.left_popup:map(
+  'n',
+  '<cr>',
+  function() vim.api.nvim_set_current_win(popups.right_popup.winid) end,
+  { silent = true }
+)
 ```
 
 Right pane:

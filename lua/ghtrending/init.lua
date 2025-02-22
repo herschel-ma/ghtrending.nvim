@@ -253,7 +253,7 @@ function display:render_table(bufnr, opts)
         {
           align = 'center',
           accessor_key = 'name',
-          header = config.segment.name,
+          header = config.segment.span_dev,
         },
         {
           align = 'left',
